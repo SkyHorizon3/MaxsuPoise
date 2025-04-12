@@ -1,7 +1,7 @@
-[submodule "extern/CommonLibSSE-NG"]
-	path = extern/CommonLibSSE-NG
-	url = https://github.com/SkyHorizon3/CommonLibVR.git
-	branch = ng
 [submodule "extern/DKUtil"]
 	path = extern/DKUtil
 	url = https://github.com/gottyduke/DKUtil.git
+[submodule "extern/CommonLibSSE-NG"]
+	path = extern/CommonLibSSE-NG
+	url = https://github.com/alandtse/CommonLibVR.git
+	branch = ng
