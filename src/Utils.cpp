@@ -45,7 +45,7 @@ namespace MaxsuPoise
 	void ApplyPerkEntryPoint(INT32 entry, RE::Actor* actor_a, RE::Actor* actor_b, float* out)
 	{
 		using func_t = decltype(&ApplyPerkEntryPoint);
-		REL::Relocation<func_t> func{ REL::RelocationID(23073, 23526) };  // 1.5.97 14032ECE0
+		static REL::Relocation<func_t> func{ REL::RelocationID(23073, 23526) };  // 1.5.97 14032ECE0
 		return func(entry, actor_a, actor_b, out);
 	}
 

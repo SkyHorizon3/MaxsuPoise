@@ -99,4 +99,16 @@ namespace RE
 		std::int32_t describedVersion;               // 4C
 	};
 	static_assert(sizeof(hkClass) == 0x50);
+
+	inline bool IsStaggering(RE::Actor* actor)
+	{
+		if (!actor)
+			return false;
+
+		auto result = false;
+		if (actor->GetGraphVariableBool("IsStaggering", result) && result)
+			return result;
+
+		return static_cast<bool>(actor->AsActorState()->actorState2.staggered);
+	}
 }

@@ -9,7 +9,7 @@ namespace MaxsuPoise
 	static inline void TryStagger(RE::Actor* a_target, float a_staggerMult, RE::Actor* a_aggressor)
 	{
 		std::int32_t staggerLevelGV = 0;
-		if (a_target->IsStaggering() && !a_target->GetGraphVariableInt("MSL_StaggerLevel", staggerLevelGV)) {
+		if (RE::IsStaggering(a_target) && !a_target->GetGraphVariableInt("MSL_StaggerLevel", staggerLevelGV)) {
 			float currentStaggerMagnitude = 0.f;
 			if (a_target->GetGraphVariableFloat("StaggerMagnitude", currentStaggerMagnitude) && currentStaggerMagnitude - a_staggerMult >= 0.1f) {
 				return;
@@ -17,7 +17,7 @@ namespace MaxsuPoise
 		}
 
 		using func_t = decltype(&TryStagger);
-		REL::Relocation<func_t> func{ REL::RelocationID(36700, 37710) };
+		static REL::Relocation<func_t> func{ REL::RelocationID(36700, 37710) };
 		func(a_target, a_staggerMult, a_aggressor);
 	}
 
@@ -32,7 +32,7 @@ namespace MaxsuPoise
 			return;
 
 		auto staggerProtectTime = StaggerProtectHandler::GetStaggerProtectTimer(target);
-		if (staggerProtectTime > 0.f && target->IsStaggering())
+		if (staggerProtectTime > 0.f && RE::IsStaggering(target))
 			return;
 
 		auto totalPoiseHealth = PoiseHealthHandler::GetTotalPoiseHealth(target);
@@ -44,14 +44,15 @@ namespace MaxsuPoise
 		auto immuneLevel = ImmuneLevelCalculator::GetTotalImmuneLevel(target);
 		if (currentPoiseHealth <= 0.f) {
 			TryStagger(target, 1.0f, aggressor);
-			if (target->IsStaggering()) {
+			if (RE::IsStaggering(target)) {
 				staggerProtectTime = StaggerProtectHandler::GetMaxStaggerProtectTime();
 				StaggerProtectHandler::SetStaggerProtectTimer(target, staggerProtectTime);
 				currentPoiseHealth = totalPoiseHealth;
 			}
-		} else if (staggerProtectTime <= 0.f) {
+		}
+		else if (staggerProtectTime <= 0.f) {
 			if (staggerLevel && staggerLevel > immuneLevel) {
-				TryStagger(target, 0.25f * (staggerLevel) + 0.01f, aggressor);
+				TryStagger(target, 0.25f * (staggerLevel)+0.01f, aggressor);
 			}
 		}
 
@@ -91,7 +92,7 @@ namespace MaxsuPoise
 			a_aggressor = nullptr;
 
 		auto staggerProtectTime = StaggerProtectHandler::GetStaggerProtectTimer(a_target);
-		if (staggerProtectTime > 0.f && a_target->IsStaggering())
+		if (staggerProtectTime > 0.f && RE::IsStaggering(a_target))
 			return;
 
 		auto totalPoiseHealth = PoiseHealthHandler::GetTotalPoiseHealth(a_target);
@@ -103,14 +104,15 @@ namespace MaxsuPoise
 		auto immuneLevel = ImmuneLevelCalculator::GetTotalImmuneLevel(a_target);
 		if (currentPoiseHealth <= 0.f) {
 			TryStagger(a_target, 1.0f, a_aggressor);
-			if (a_target->IsStaggering()) {
+			if (RE::IsStaggering(a_target)) {
 				staggerProtectTime = StaggerProtectHandler::GetMaxStaggerProtectTime();
 				StaggerProtectHandler::SetStaggerProtectTimer(a_target, staggerProtectTime);
 				currentPoiseHealth = totalPoiseHealth;
 			}
-		} else if (staggerProtectTime <= 0.f) {
+		}
+		else if (staggerProtectTime <= 0.f) {
 			if (staggerLevel && staggerLevel > immuneLevel) {
-				TryStagger(a_target, 0.25f * (staggerLevel) + 0.01f, a_aggressor);
+				TryStagger(a_target, 0.25f * (staggerLevel)+0.01f, a_aggressor);
 			}
 		}
 
@@ -165,7 +167,11 @@ namespace MaxsuPoise
 			if (!keyword)
 				continue;
 
-			if (a_target->HasKeyword(keyword) || HasActiveEffectWithKeyword(a_target->AsMagicTarget(), keyword)) {
+			auto magicTarget = a_target->AsMagicTarget();
+			if (!magicTarget)
+				continue;
+
+			if (a_target->HasKeyword(keyword) || HasActiveEffectWithKeyword(magicTarget, keyword)) {
 				if (pair.second > result)
 					result = pair.second;
 			}
@@ -244,7 +250,8 @@ namespace MaxsuPoise
 					if (annoInfo.IsInFrames(a_clip->localTime) && annoInfo.immuneLevel > result) {
 						result = annoInfo.immuneLevel;
 					}
-				} catch (json::exception& ex) {
+				}
+				catch (json::exception& ex) {
 					ERROR("Caught an expection when convert annoation: {}", ex.what());
 					continue;
 				}

@@ -1,13 +1,16 @@
 #include "LoadGame.h"
 
-extern "C" DLLEXPORT const auto SKSEPlugin_Version = []() noexcept {
-	SKSE::PluginVersionData v;
-	v.PluginName(Plugin::NAME.data());
-	v.PluginVersion(Plugin::VERSION);
-	v.UsesAddressLibrary(true);
-	v.HasNoStructUse();
-	return v;
-}();
+extern "C" DLLEXPORT constinit auto SKSEPlugin_Version = []()
+	{
+		SKSE::PluginVersionData v;
+		v.PluginName(Plugin::NAME);
+		v.PluginVersion(Plugin::VERSION);
+		v.AuthorName("Maxsu and SkyHorizon"sv);
+		v.UsesAddressLibrary();
+		v.UsesNoStructs();
+		return v;
+	}
+();
 
 extern "C" DLLEXPORT bool SKSEAPI SKSEPlugin_Query(const SKSE::QueryInterface*, SKSE::PluginInfo* pluginInfo)
 {
@@ -29,7 +32,7 @@ DLLEXPORT bool SKSEAPI SKSEPlugin_Load(const SKSE::LoadInterface* a_skse)
 
 	DKUtil::Logger::Init(Plugin::NAME, REL::Module::get().version().string());
 
-	SKSE::Init(a_skse);
+	SKSE::Init(a_skse, false);
 
 	INFO("{} v{} loaded", Plugin::NAME, Plugin::VERSION);
 
@@ -40,6 +43,7 @@ DLLEXPORT bool SKSEAPI SKSEPlugin_Load(const SKSE::LoadInterface* a_skse)
 		return false;
 	}
 
+	SKSE::AllocTrampoline(56);
 	g_message->RegisterListener(MaxsuPoise::EventCallback);
 
 	return true;
