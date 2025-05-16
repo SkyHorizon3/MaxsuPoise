@@ -187,7 +187,14 @@ namespace MaxsuPoise
 
 	bool ImmuneLevelCalculator::HasActiveEffectWithKeyword(RE::MagicTarget* a_target, RE::BGSKeyword* a_keyword)
 	{
-		for (const auto effect : *(a_target->GetActiveEffectList())) {
+		if (!a_target)
+			return false;
+
+		const auto list = a_target->GetActiveEffectList();
+		if (!list)
+			return false;
+
+		for (const auto effect : *list) {
 			if (effect->GetBaseObject()->HasKeyword(a_keyword) && (effect->conditionStatus.get() == RE::ActiveEffect::ConditionStatus::kTrue))
 				return true;
 		}

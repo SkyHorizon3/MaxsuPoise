@@ -22,7 +22,7 @@ namespace MaxsuPoise
 
 	float PoiseHealthHandler::GetTotalPoiseHealth(RE::Actor* a_target)
 	{
-		if (!a_target)
+		if (!a_target || !a_target->Is3DLoaded() || !a_target->IsInitialized())
 			return 0.f;
 
 		auto actorPoiseHealth = GetBasePoiseHealth() * GetActorMass(a_target) * a_target->GetScale();
@@ -51,7 +51,8 @@ namespace MaxsuPoise
 			auto armorHealth = baseArmorPoiseHealth * pair.second;
 			if (armor && (armor->IsLightArmor() || armor->IsHeavyArmor())) {
 				result += armor->IsLightArmor() ? armorHealth : armorHealth * (1 + heavyArmorBouns);
-			} else {
+			}
+			else {
 				armor = a_target->GetSkin(slot);
 				if (armor && (armor->IsLightArmor() || armor->IsHeavyArmor()))
 					result += armor->IsLightArmor() ? armorHealth : armorHealth * (1 + heavyArmorBouns);
