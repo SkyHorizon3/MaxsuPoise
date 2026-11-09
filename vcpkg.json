@@ -1,14 +1,12 @@
 {
-    "name":  "maxsupoise",
-    "version-string":  "1.0.0",
-    "description":  "",
-    "license":  "MIT",
-    "dependencies":  [
-                         "spdlog"
-                     ],
-    "features":  {
-                     "mo2-install":  {
-                                         "description":  "MaxsuPoise"
-                                     }
-                 }
+  "name": "maxsupoise",
+  "version-string": "0.3.4",
+  "description": "Example CLib NG project",
+  "dependencies": [
+    "commonlibsse-ng",
+    "nlohmann-json",
+    "simpleini",
+    "clib-util"
+  ],
+  "builtin-baseline": "eb2d3a3279fd019cb7733072d86900d0ad2a1aef"
 }

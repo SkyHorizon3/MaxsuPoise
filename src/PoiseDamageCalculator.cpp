@@ -15,7 +15,7 @@ namespace MaxsuPoise
 		auto sourceProjectile = a_hitData->sourceRef ? a_hitData->sourceRef.get().get()->AsProjectile() : nullptr;
 
 		float baseWeapDamage = sourceProjectile ? GetBaseRangePoiseDamage() : GetBaseMeleePoiseDamage();
-		float weapDamageMult = sourceProjectile ? GetWeaponDamageMult(sourceProjectile->weaponSource) : GetWeaponDamageMult(a_hitData->weapon);
+		float weapDamageMult = sourceProjectile ? GetWeaponDamageMult(sourceProjectile->GetProjectileRuntimeData().weaponSource) : GetWeaponDamageMult(a_hitData->weapon);
 		float animDamageMult = aggressor ? GetAnimationDamageMult(aggressor) : 0.f;
 		float attackDataMult = GetAttackDataDamageMult(a_hitData->attackData.get());
 		float ModTargetStagger = GetPerkModTargetStagger(aggressor, target);
@@ -33,12 +33,14 @@ namespace MaxsuPoise
 
 	float PoiseDamageCalculator::GetBaseMeleePoiseDamage()
 	{
-		return GetGameSettingFloat("fMaxsuPoise_BaseMeleePoiseDamage", 10.5f);
+		const auto gs = "fMaxsuPoise_BaseMeleePoiseDamage"_gs;
+		return gs.has_value() ? *gs : 10.5f;
 	}
 
 	float PoiseDamageCalculator::GetBaseRangePoiseDamage()
 	{
-		return GetGameSettingFloat("fMaxsuPoise_BaseRangePoiseDamage", 10.5f);
+		const auto gs = "fMaxsuPoise_BaseRangePoiseDamage"_gs;
+		return gs.has_value() ? *gs : 10.5f;
 	}
 
 	float PoiseDamageCalculator::GetWeaponDamageMult(RE::TESObjectWEAP* a_weapon)
@@ -50,8 +52,9 @@ namespace MaxsuPoise
 			return a_weapon->GetStagger();
 
 		auto weapType = a_weapon->GetWeaponType();
-		auto item = SettingsHandler::weapTypeMultMap.find(weapType);
-		if (item != SettingsHandler::weapTypeMultMap.end()) {
+		const auto& map = SettingsHandler::GetSingleton()->weapTypeMultMap;
+		auto item = map.find(weapType);
+		if (item != map.end()) {
 			return item->second;
 		}
 
@@ -78,7 +81,8 @@ namespace MaxsuPoise
 			kFullyBlocked = 1
 		};
 
-		auto blockedMode = GetGameSettingUInt("uMaxsuPoise_BlockedMode", 0);
+		const auto gs = "uMaxsuPoise_BlockedMode"_gs;
+		const auto blockedMode = gs.has_value() ? *gs : 0;
 		if (a_hitData && blockedMode == BlockedModes::kPercentBlocked)
 			return (1.f - std::clamp(a_hitData->percentBlocked, 0.f, 1.f));
 
@@ -87,8 +91,8 @@ namespace MaxsuPoise
 
 	float PoiseDamageCalculator::GetStrengthMult(RE::Actor* a_aggressor, RE::Actor* a_target)
 	{
-		float attackerSTRG = GetActorMass(a_aggressor) * a_aggressor->GetScale();
-		float targetSTRG = GetActorMass(a_target) * a_target->GetScale();
+		const float attackerSTRG = GetActorMass(a_aggressor) * a_aggressor->GetScale();
+		const float targetSTRG = GetActorMass(a_target) * a_target->GetScale();
 		return attackerSTRG / targetSTRG;
 	}
 
@@ -106,14 +110,15 @@ namespace MaxsuPoise
 
 	float PoiseDamageCalculator::GetBaseMagicPoiseDamage()
 	{
-		return GetGameSettingFloat("fMaxsuPoise_BaseMagicPoiseDamage", 100.0f);
+		const auto gs = "fMaxsuPoise_BaseMagicPoiseDamage"_gs;
+		return gs.has_value() ? *gs : 100.0f;
 	}
 
 	float PoiseDamageCalculator::GetPerkModTargetStagger(RE::Actor* a_aggressor, RE::Actor* a_target)
 	{
 		using EntryPoint = RE::BGSEntryPointPerkEntry::EntryPoint;
 		float result = 1.0f;
-		ApplyPerkEntryPoint(EntryPoint::kModTargetStagger, a_aggressor, a_target, &result);
+		RE::BGSEntryPoint::HandleEntryPoint(EntryPoint::kModTargetStagger, a_aggressor, a_target, &result);
 		return result;
 	}
 
@@ -121,7 +126,7 @@ namespace MaxsuPoise
 	{
 		using EntryPoint = RE::BGSEntryPointPerkEntry::EntryPoint;
 		float result = 1.0f;
-		ApplyPerkEntryPoint(EntryPoint::kModIncomingStagger, a_target, a_aggressor, &result);
+		RE::BGSEntryPoint::HandleEntryPoint(EntryPoint::kModIncomingStagger, a_target, a_aggressor, &result);
 		return result;
 	}
 }

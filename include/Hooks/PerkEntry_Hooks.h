@@ -17,20 +17,18 @@ namespace MaxsuPoise
 	private:
 		struct ApplyPerkEntryPoint_Aggressor
 		{
-			static void thunk(INT32 entry, RE::Actor* target, RE::Actor* aggressor, float& staggerMult)
+			static void thunk(std::int32_t, RE::Actor*, RE::Actor*, float&)
 			{
 				return;
-				func(entry, target, aggressor, staggerMult);
 			}
 			static inline REL::Relocation<decltype(thunk)> func;
 		};
 
 		struct ApplyPerkEntryPoint_Target
 		{
-			static void thunk(INT32 entry, RE::Actor* target, RE::Actor* aggressor, float& staggerMult)
+			static void thunk(std::int32_t, RE::Actor*, RE::Actor*, float&)
 			{
 				return;
-				func(entry, target, aggressor, staggerMult);
 			}
 			static inline REL::Relocation<decltype(thunk)> func;
 		};

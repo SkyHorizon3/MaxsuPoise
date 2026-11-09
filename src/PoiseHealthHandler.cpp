@@ -4,13 +4,13 @@
 
 namespace MaxsuPoise
 {
-	static constexpr char CURRENT_POISE_HEALTH_GV[] = "MaxsuPoise_PoiseHealth";
+	inline constexpr const char* CURRENT_POISE_HEALTH_GV = "MaxsuPoise_PoiseHealth";
 
 	float PoiseHealthHandler::GetCurrentPoiseHealth(RE::Actor* a_target)
 	{
 		float result = 0.f;
 		if (!a_target || !a_target->GetGraphVariableFloat(CURRENT_POISE_HEALTH_GV, result))
-			WARN("Not Graph Variable Float Found: {}", CURRENT_POISE_HEALTH_GV);
+			SKSE::log::warn("Not Graph Variable Float Found: {}", CURRENT_POISE_HEALTH_GV);
 
 		return result;
 	}
@@ -32,7 +32,8 @@ namespace MaxsuPoise
 
 	float PoiseHealthHandler::GetBasePoiseHealth()
 	{
-		return GetGameSettingFloat("fMaxsuPoise_BasePoiseHealth", 40.f);
+		const auto gs = "fMaxsuPoise_BasePoiseHealth"_gs;
+		return gs.has_value() ? *gs : 40.f;
 	}
 
 	float PoiseHealthHandler::GetTotalArmorPoiseHealth(RE::Actor* a_target)
@@ -45,7 +46,7 @@ namespace MaxsuPoise
 		auto baseArmorPoiseHealth = GetBaseArmorPoiseHealth();
 		auto heavyArmorBouns = GetHeavyArmorBouns();
 
-		for (const auto& pair : SettingsHandler::armorSlotMultMap) {
+		for (const auto& pair : SettingsHandler::GetSingleton()->armorSlotMultMap) {
 			auto slot = pair.first;
 			auto armor = a_target->GetWornArmor(slot);
 			auto armorHealth = baseArmorPoiseHealth * pair.second;
@@ -63,11 +64,13 @@ namespace MaxsuPoise
 
 	float PoiseHealthHandler::GetBaseArmorPoiseHealth()
 	{
-		return GetGameSettingFloat("fMaxsuPoise_BaseArmorPoiseHealth", 50.f);
+		const auto gs = "fMaxsuPoise_BaseArmorPoiseHealth"_gs;
+		return gs.has_value() ? *gs : 50.f;
 	}
 
 	float PoiseHealthHandler::GetHeavyArmorBouns()
 	{
-		return GetGameSettingFloat("fMaxsuPoise_HeavyArmorPoiseBonus", 0.5f);
+		const auto gs = "fMaxsuPoise_HeavyArmorPoiseBonus"_gs;
+		return gs.has_value() ? *gs : 0.5f;
 	}
 }

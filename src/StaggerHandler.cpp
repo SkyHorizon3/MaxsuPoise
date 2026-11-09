@@ -6,7 +6,7 @@
 
 namespace MaxsuPoise
 {
-	static inline void TryStagger(RE::Actor* a_target, float a_staggerMult, RE::Actor* a_aggressor)
+	static void TryStagger(RE::Actor* a_target, float a_staggerMult, RE::Actor* a_aggressor)
 	{
 		std::int32_t staggerLevelGV = 0;
 		if (a_target->IsStaggering() && !a_target->GetGraphVariableInt("MSL_StaggerLevel", staggerLevelGV)) {
@@ -17,7 +17,7 @@ namespace MaxsuPoise
 		}
 
 		using func_t = decltype(&TryStagger);
-		REL::Relocation<func_t> func{ REL::RelocationID(36700, 37710) };
+		static REL::Relocation<func_t> func{ REL::RelocationID(36700, 37710) };
 		func(a_target, a_staggerMult, a_aggressor);
 	}
 
@@ -139,10 +139,14 @@ namespace MaxsuPoise
 
 	StaggerLevel StaggerHandler::GetStaggerLevel(const float& a_DamagePercent)
 	{
+		const auto smallStagger = "fMaxsuPoise_SmallStaggerTHLD"_gs;
+		const auto mediumStagger = "fMaxsuPoise_MediumStaggerTHLD"_gs;
+		const auto largeStagger = "fMaxsuPoise_LargeStaggerTHLD"_gs;
+
 		float damageTHLD_Arr[StaggerLevel::kLargest] = {
-			GetGameSettingFloat("fMaxsuPoise_SmallStaggerTHLD", 0.17f),
-			GetGameSettingFloat("fMaxsuPoise_MediumStaggerTHLD", 0.25f),
-			GetGameSettingFloat("fMaxsuPoise_LargeStaggerTHLD", 0.5f),
+			smallStagger.has_value() ? *smallStagger : 0.17f,
+			mediumStagger.has_value() ? *mediumStagger : 0.25f,
+			largeStagger.has_value() ? *largeStagger : 0.5f,
 			1.0f
 		};
 
@@ -181,9 +185,40 @@ namespace MaxsuPoise
 
 	bool ImmuneLevelCalculator::HasActiveEffectWithKeyword(RE::MagicTarget* a_target, RE::BGSKeyword* a_keyword)
 	{
-		for (const auto effect : *(a_target->GetActiveEffectList())) {
-			if (effect->GetBaseObject()->HasKeyword(a_keyword) && (effect->conditionStatus.get() == RE::ActiveEffect::ConditionStatus::kTrue))
+		if (!a_target)
+			return false;
+
+		const auto matchesEffect = [&](RE::ActiveEffect* effect) -> bool {
+			if (!effect)
+				return false;
+
+			const auto baseObject = effect->GetBaseObject();
+			if (!baseObject)
+				return false;
+
+			return baseObject->HasKeyword(a_keyword) && (effect->conditionStatus.get() == RE::ActiveEffect::ConditionStatus::kTrue);
+		};
+
+		if (REL::Module::IsVR()) {
+			bool hasKeyword = false;
+			a_target->VisitActiveEffects([&](RE::ActiveEffect* effect) {
+				if (matchesEffect(effect)) {
+					hasKeyword = true;
+					return RE::BSContainer::ForEachResult::kStop;
+				}
+				return RE::BSContainer::ForEachResult::kContinue;
+			});
+			return hasKeyword;
+		}
+
+		const auto effectList = a_target->GetActiveEffectList();
+		if (!effectList)
+			return false;
+
+		for (const auto& effect : *effectList) {
+			if (matchesEffect(effect)) {
 				return true;
+			}
 		}
 
 		return false;
@@ -201,7 +236,7 @@ namespace MaxsuPoise
 			auto behaviourGraph = graphMgr->graphs[0] ? graphMgr->graphs[0]->behaviorGraph : nullptr;
 			auto activeNodes = behaviourGraph ? behaviourGraph->activeNodes : nullptr;
 			if (activeNodes) {
-				for (auto nodeInfo : *activeNodes) {
+				for (const auto& nodeInfo : *activeNodes) {
 					auto nodeClone = nodeInfo.nodeClone;
 					if (nodeClone && nodeClone->GetClassType()) {
 						auto clipGenrator = ToClipGenerator(nodeClone);
@@ -226,7 +261,7 @@ namespace MaxsuPoise
 		if (!a_clip)
 			return result;
 
-		static constexpr std::string_view prefix = "MaxsuPoise";
+		constexpr std::string_view prefix = "MaxsuPoise";
 
 		auto binding = a_clip ? a_clip->binding : nullptr;
 		auto animation = binding ? binding->animation : nullptr;
@@ -234,7 +269,7 @@ namespace MaxsuPoise
 		if (!animation || animation->annotationTracks.empty())
 			return result;
 
-		for (auto anno : animation->annotationTracks[0].annotations) {
+		for (const auto& anno : animation->annotationTracks[0].annotations) {
 			std::string_view text{ anno.text.c_str() };
 			if (text.starts_with(prefix)) {
 				try {
@@ -245,7 +280,7 @@ namespace MaxsuPoise
 						result = annoInfo.immuneLevel;
 					}
 				} catch (json::exception& ex) {
-					ERROR("Caught an expection when convert annoation: {}", ex.what());
+					SKSE::log::error("Caught an expection when convert annoation: {}", ex.what());
 					continue;
 				}
 			}

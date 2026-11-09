@@ -1,4 +1,4 @@
-#include "PoiseRegenHandler.h"
+#include "Hooks/PoiseRegenHandler.h"
 #include "PoiseHealthHandler.h"
 #include "Utils.h"
 
@@ -18,7 +18,11 @@ namespace MaxsuPoise
 
 	void PoiseRegenHandler::UpdatePoiseValue(RE::Actor* a_target, float a_delta)
 	{
-		if (!a_target || !a_target->currentProcess || !a_target->currentProcess->high || !a_target->Is3DLoaded() || !a_target->IsInitialized())
+		if (!a_target)
+			return;
+
+		const auto& runtimeData = a_target->GetActorRuntimeData();
+		if (!runtimeData.currentProcess || !runtimeData.currentProcess->high || !a_target->Is3DLoaded() || !a_target->IsInitialized())
 			return;
 
 		const auto totalPoiseHealth = PoiseHealthHandler::GetTotalPoiseHealth(a_target);
@@ -44,19 +48,21 @@ namespace MaxsuPoise
 
 	float PoiseRegenHandler::GetPoiseRegenRate()
 	{
-		return GetGameSettingFloat("fMaxsuPoise_PoiseRegen", 0.05f);
+		const auto gs = "fMaxsuPoise_PoiseRegen"_gs;
+		return gs.has_value() ? *gs : 0.05f;
 	}
 
 	float RegenDelayHandler::GetMaxRegenDelayTime()
 	{
-		return GetGameSettingFloat("fMaxsuPoise_RegenDelayTime", 1.0f);
+		const auto gs = "fMaxsuPoise_RegenDelayTime"_gs;
+		return gs.has_value() ? *gs : 1.0f;
 	}
 
 	float RegenDelayHandler::GetPoiseRegenDelayTimer(RE::Actor* a_target)
 	{
 		float result = 0.f;
 		if (!a_target || !a_target->GetGraphVariableFloat(CURRENT_REGEN_DELAY_GV, result))
-			WARN("Not Graph Variable Float Found: {}", CURRENT_REGEN_DELAY_GV);
+			SKSE::log::warn("Not Graph Variable Float Found: {}", CURRENT_REGEN_DELAY_GV);
 
 		return result;
 	}
@@ -70,7 +76,7 @@ namespace MaxsuPoise
 	{
 		float result = 0.f;
 		if (!a_target || !a_target->GetGraphVariableFloat(CURRENT_STAGGER_TIMER_GV, result))
-			WARN("Not Graph Variable Float Found: {}", CURRENT_STAGGER_TIMER_GV);
+			SKSE::log::warn("Not Graph Variable Float Found: {}", CURRENT_STAGGER_TIMER_GV);
 
 		return result;
 	}
@@ -82,7 +88,7 @@ namespace MaxsuPoise
 
 	float StaggerProtectHandler::GetMaxStaggerProtectTime()
 	{
-		return GetGameSettingFloat("fMaxsuPoise_StaggerProtectTime", 0.85f);
+		const auto gs = "fMaxsuPoise_StaggerProtectTime"_gs;
+		return gs.has_value() ? *gs : 0.85f;
 	}
-
 }

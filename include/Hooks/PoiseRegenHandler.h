@@ -12,7 +12,7 @@ namespace MaxsuPoise
 			{
 				REL::Relocation<std::uintptr_t> CharacterVtbl{ VTABLE[0] };
 				func = CharacterVtbl.write_vfunc(0x0AD, &Hook_Update);
-				INFO("Hook Actor Update!");
+				SKSE::log::info("Hook Actor Update!");
 			}
 
 		private:
@@ -28,7 +28,7 @@ namespace MaxsuPoise
 			{
 				REL::Relocation<std::uintptr_t> PlayerCharacterVtbl{ VTABLE[0] };
 				func = PlayerCharacterVtbl.write_vfunc(0x0AD, &Hook_Update);
-				INFO("Hook Actor Update!");
+				SKSE::log::info("Hook Actor Update!");
 			}
 
 		private:

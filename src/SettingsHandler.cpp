@@ -3,76 +3,141 @@
 
 namespace MaxsuPoise
 {
-	static constexpr char fileName[] = R"(Data\SKSE\Plugins\MaxsuPoise.ini)";
-
 	bool SettingsHandler::Register()
 	{
 		UpdateWeapTypeMult();
 		InitArmorSlotMult();
 
-		static SettingsHandler singleton;
 		auto eventSource = SKSE::GetModCallbackEventSource();
 		if (!eventSource) {
-			ERROR("EventSource not found!");
+			SKSE::log::error("EventSource not found!");
 			return false;
 		}
 
-		eventSource->AddEventSink(&singleton);
+		auto singleton = GetSingleton();
+		eventSource->AddEventSink(singleton);
 
-		INFO("Register {}", typeid(singleton).name());
+		SKSE::log::info("Register {}", typeid(singleton).name());
 
 		return true;
 	}
 
+	static std::optional<RE::WEAPON_TYPE> WeaponTypeFromString(std::string_view nameIn)
+	{
+		constexpr std::array<std::pair<std::string_view, RE::WEAPON_TYPE>, 10> weaponTypeNames{ {
+			{ "kHandToHandMelee", RE::WEAPON_TYPE::kHandToHandMelee },
+			{ "kOneHandSword", RE::WEAPON_TYPE::kOneHandSword },
+			{ "kOneHandDagger", RE::WEAPON_TYPE::kOneHandDagger },
+			{ "kOneHandAxe", RE::WEAPON_TYPE::kOneHandAxe },
+			{ "kOneHandMace", RE::WEAPON_TYPE::kOneHandMace },
+			{ "kTwoHandSword", RE::WEAPON_TYPE::kTwoHandSword },
+			{ "kTwoHandAxe", RE::WEAPON_TYPE::kTwoHandAxe },
+			{ "kBow", RE::WEAPON_TYPE::kBow },
+			{ "kStaff", RE::WEAPON_TYPE::kStaff },
+			{ "kCrossbow", RE::WEAPON_TYPE::kCrossbow },
+		} };
+
+		for (const auto& [name, type] : weaponTypeNames) {
+			if (clib_util::string::iequals(name, nameIn)) {
+				return type;
+			}
+		}
+		return std::nullopt;
+	}
+
+	static std::optional<RE::BGSBipedObjectForm::BipedObjectSlot> BipedObjectSlotFromString(std::string_view nameIn)
+	{
+		using Slot = RE::BGSBipedObjectForm::BipedObjectSlot;
+
+		constexpr std::array<std::pair<std::string_view, Slot>, 33> slotNames{ {
+			{ "kNone", Slot::kNone },
+			{ "kHead", Slot::kHead },
+			{ "kHair", Slot::kHair },
+			{ "kBody", Slot::kBody },
+			{ "kHands", Slot::kHands },
+			{ "kForearms", Slot::kForearms },
+			{ "kAmulet", Slot::kAmulet },
+			{ "kRing", Slot::kRing },
+			{ "kFeet", Slot::kFeet },
+			{ "kCalves", Slot::kCalves },
+			{ "kShield", Slot::kShield },
+			{ "kTail", Slot::kTail },
+			{ "kLongHair", Slot::kLongHair },
+			{ "kCirclet", Slot::kCirclet },
+			{ "kEars", Slot::kEars },
+			{ "kModMouth", Slot::kModMouth },
+			{ "kModNeck", Slot::kModNeck },
+			{ "kModChestPrimary", Slot::kModChestPrimary },
+			{ "kModBack", Slot::kModBack },
+			{ "kModMisc1", Slot::kModMisc1 },
+			{ "kModPelvisPrimary", Slot::kModPelvisPrimary },
+			{ "kDecapitateHead", Slot::kDecapitateHead },
+			{ "kDecapitate", Slot::kDecapitate },
+			{ "kModPelvisSecondary", Slot::kModPelvisSecondary },
+			{ "kModLegRight", Slot::kModLegRight },
+			{ "kModLegLeft", Slot::kModLegLeft },
+			{ "kModFaceJewelry", Slot::kModFaceJewelry },
+			{ "kModChestSecondary", Slot::kModChestSecondary },
+			{ "kModShoulder", Slot::kModShoulder },
+			{ "kModArmLeft", Slot::kModArmLeft },
+			{ "kModArmRight", Slot::kModArmRight },
+			{ "kModMisc2", Slot::kModMisc2 },
+			{ "kFX01", Slot::kFX01 },
+		} };
+
+		for (const auto& [name, slot] : slotNames) {
+			if (clib_util::string::iequals(name, nameIn)) {
+				return slot;
+			}
+		}
+		return std::nullopt;
+	}
+
 	void SettingsHandler::UpdateWeapTypeMult()
 	{
-		auto& WeapTypeEnumTbl = dku::static_enum<WEAPON_TYPE>();
+		const auto path = std::format("Data/SKSE/Plugins/{}.ini", Plugin::NAME);
 
 		CSimpleIniA ini;
-		if (ini.LoadFile(fileName))  // Load the ini file
-			ERROR("Get Error When loading file {}", fileName);
+		ini.SetUnicode();
+		if (ini.LoadFile(path.c_str()) < 0) {
+			return;
+		}
 
-		// get a pointer to the "WeaponTypeMult" section
-		const CSimpleIniA::TKeyVal* section = ini.GetSection("WeaponTypeMult");
+		const auto section = ini.GetSection("WeaponTypeMult");
 		if (!section) {
 			return;
 		}
 
-		// iterate through the key-value pairs in the section
-		for (CSimpleIniA::TKeyVal::const_iterator it = section->begin(); it != section->end(); ++it) {
-			const char* key = it->first.pItem;
-			const char* value = it->second;
-			auto weapEnum = WeapTypeEnumTbl.from_string(key);
-			if (weapEnum.has_value()) {
-				weapTypeMultMap[weapEnum.value()] = (std::stof(value));
+		for (const auto& [keyEntry, value] : *section) {
+			const auto weapEnum = WeaponTypeFromString(keyEntry.pItem);
+			if (!weapEnum) {
+				continue;
 			}
+			weapTypeMultMap[*weapEnum] = clib_util::string::to_num<float>(value);
 		}
 	}
 
 	void SettingsHandler::InitArmorSlotMult()
 	{
-		static constexpr char armorSlotFile[] = R"(Data\SKSE\Plugins\MaxsuPoise_ArmorSlot.ini)";
-
-		auto& BipeSlotEnumTbl = dku::static_enum<BipedSlot>();
+		const auto path = std::format("Data/SKSE/Plugins/{}_ArmorSlot.ini", Plugin::NAME);
 
 		CSimpleIniA ini;
-		if (ini.LoadFile(armorSlotFile))  // Load the ini file
-			ERROR("Get Error When loading file {}", armorSlotFile);
+		ini.SetUnicode();
+		if (ini.LoadFile(path.c_str()) < 0) {
+			return;
+		}
 
-		// get a pointer to the "ArmorSlotMult" section
-		const CSimpleIniA::TKeyVal* section = ini.GetSection("ArmorSlotMult");
+		const auto section = ini.GetSection("ArmorSlotMult");
 		if (!section) {
 			return;
 		}
 
-		// iterate through the key-value pairs in the section
-		for (CSimpleIniA::TKeyVal::const_iterator it = section->begin(); it != section->end(); ++it) {
-			const char* key = it->first.pItem;
-			const char* value = it->second;
-			auto armorSlotEnum = BipeSlotEnumTbl.from_string(key);
-			if (armorSlotEnum.has_value()) {
-				armorSlotMultMap[armorSlotEnum.value()] = (std::stof(value));
+		for (const auto& [keyEntry, value] : *section) {
+			const auto armorSlot = BipedObjectSlotFromString(keyEntry.pItem);
+			if (!armorSlot) {
+				continue;
 			}
+			armorSlotMultMap[*armorSlot] = clib_util::string::to_num<float>(value);
 		}
 	}
 

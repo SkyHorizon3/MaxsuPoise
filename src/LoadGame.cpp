@@ -10,10 +10,10 @@ namespace MaxsuPoise
 	void EventCallback(SKSE::MessagingInterface::Message* msg)
 	{
 		if (msg->type == SKSE::MessagingInterface::kPostPostLoad) {
-			static constexpr auto bdiDLLName = "BehaviorDataInjector.dll";
-			auto bdiPlugin = GetModuleHandleA(bdiDLLName);
+			constexpr auto bdiDLLName = "BehaviorDataInjector.dll";
+			const auto bdiPlugin = REX::W32::GetModuleHandleA(bdiDLLName);
 			if (!bdiPlugin) {
-				ERROR("Not \"{}\" Loaded!", bdiDLLName);
+				SKSE::log::error("Not \"{}\" Loaded!", bdiDLLName);
 				return;
 			}
 
