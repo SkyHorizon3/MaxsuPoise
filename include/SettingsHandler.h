@@ -16,7 +16,7 @@ namespace MaxsuPoise
 
 		static bool Register();
 
-		EventResult ProcessEvent(const SKSE::ModCallbackEvent* a_event, RE::BSTEventSource<SKSE::ModCallbackEvent>* a_eventSource) override
+		EventResult ProcessEvent(const SKSE::ModCallbackEvent* a_event, [[maybe_unused]] RE::BSTEventSource<SKSE::ModCallbackEvent>* a_eventSource) override
 		{
 			if (a_event && _strcmpi(a_event->eventName.c_str(), "dmenu_updateSettings") == 0 && _strcmpi(a_event->strArg.c_str(), Plugin::NAME.data()) == 0) {
 				UpdateWeapTypeMult();

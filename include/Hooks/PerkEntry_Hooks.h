@@ -10,8 +10,12 @@ namespace MaxsuPoise
 	public:
 		static void Install()
 		{
-			stl::write_thunk_call<ApplyPerkEntryPoint_Aggressor>(REL::RelocationID(36700, 37710).address() + REL::Relocate(0x9A, 0xA1, 0x9A));  // 1.5.97 1405FA1B0
-			stl::write_thunk_call<ApplyPerkEntryPoint_Target>(REL::RelocationID(36700, 37710).address() + REL::Relocate(0xAE, 0xB9, 0xAE));     // 1.5.97 1405FA1B0
+			constexpr auto address = RELOCATION_ID(36700, 37710);
+			REL::Relocation<std::uintptr_t> target1{ address, REL::Relocate(0x9A, 0xA1, 0x9A) };
+			REL::Relocation<std::uintptr_t> target2{ address, REL::Relocate(0xAE, 0xB9, 0xAE) };
+
+			stl::write_thunk_call<ApplyPerkEntryPoint_Aggressor>(target1.address());  // 1.5.97 1405FA1B0
+			stl::write_thunk_call<ApplyPerkEntryPoint_Target>(target2.address());     // 1.5.97 1405FA1B0
 		}
 
 	private:

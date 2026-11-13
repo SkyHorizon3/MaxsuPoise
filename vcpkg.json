@@ -1,7 +1,7 @@
 {
   "name": "maxsupoise",
   "version-string": "0.3.4",
-  "description": "Example CLib NG project",
+  "description": "",
   "dependencies": [
     "commonlibsse-ng",
     "nlohmann-json",

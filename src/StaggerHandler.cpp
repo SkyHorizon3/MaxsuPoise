@@ -51,7 +51,7 @@ namespace MaxsuPoise
 			}
 		} else if (staggerProtectTime <= 0.f) {
 			if (staggerLevel && staggerLevel > immuneLevel) {
-				TryStagger(target, 0.25f * (staggerLevel) + 0.01f, aggressor);
+				TryStagger(target, 0.25f * static_cast<float>(staggerLevel) + 0.01f, aggressor);
 			}
 		}
 
@@ -110,7 +110,7 @@ namespace MaxsuPoise
 			}
 		} else if (staggerProtectTime <= 0.f) {
 			if (staggerLevel && staggerLevel > immuneLevel) {
-				TryStagger(a_target, 0.25f * (staggerLevel) + 0.01f, a_aggressor);
+				TryStagger(a_target, 0.25f * static_cast<float>(staggerLevel) + 0.01f, a_aggressor);
 			}
 		}
 
@@ -169,7 +169,7 @@ namespace MaxsuPoise
 			if (!keyword)
 				continue;
 
-			if (a_target->HasKeyword(keyword) || HasActiveEffectWithKeyword(a_target, keyword)) {
+			if (a_target->HasKeyword(keyword) || HasActiveEffectWithKeyword(a_target->AsMagicTarget(), keyword)) {
 				if (pair.second > result)
 					result = pair.second;
 			}

@@ -7,7 +7,8 @@ namespace MaxsuPoise
 		if (!a_target || !a_target->GetActorRuntimeData().race)
 			return 0.f;
 
-		return a_target->GetActorValue(RE::ActorValue::kMass);
+		const auto valueOwner = a_target->AsActorValueOwner();
+		return valueOwner->GetActorValue(RE::ActorValue::kMass);
 	}
 
 	void CPrint(const char* a_fmt, ...)
@@ -23,7 +24,7 @@ namespace MaxsuPoise
 
 	RE::hkbClipGenerator* ToClipGenerator(RE::hkbNode* a_node)
 	{
-		constexpr char CLASS_NAME[] = "hkbClipGenerator";
+		constexpr const char* CLASS_NAME = "hkbClipGenerator";
 
 		if (a_node && a_node->GetClassType()) {
 			if (_strcmpi(a_node->GetClassType()->name, CLASS_NAME) == 0)

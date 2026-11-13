@@ -5,8 +5,10 @@ namespace MaxsuPoise
 {
 	bool SettingsHandler::Register()
 	{
-		UpdateWeapTypeMult();
-		InitArmorSlotMult();
+		auto singleton = GetSingleton();
+
+		singleton->UpdateWeapTypeMult();
+		singleton->InitArmorSlotMult();
 
 		auto eventSource = SKSE::GetModCallbackEventSource();
 		if (!eventSource) {
@@ -14,7 +16,6 @@ namespace MaxsuPoise
 			return false;
 		}
 
-		auto singleton = GetSingleton();
 		eventSource->AddEventSink(singleton);
 
 		SKSE::log::info("Register {}", typeid(singleton).name());

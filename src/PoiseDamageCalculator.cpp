@@ -61,7 +61,7 @@ namespace MaxsuPoise
 		return 0.0f;
 	}
 
-	float PoiseDamageCalculator::GetAnimationDamageMult(RE::Actor* a_aggressor)
+	float PoiseDamageCalculator::GetAnimationDamageMult(RE::Actor*)
 	{
 		return 0.0f;
 	}
@@ -76,7 +76,8 @@ namespace MaxsuPoise
 
 	float PoiseDamageCalculator::GetBlockingMult(const RE::HitData* a_hitData)
 	{
-		static enum BlockedModes {
+		enum BlockedModes
+		{
 			kPercentBlocked = 0,
 			kFullyBlocked = 1
 		};

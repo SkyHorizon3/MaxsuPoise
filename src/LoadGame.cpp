@@ -18,6 +18,8 @@ namespace MaxsuPoise
 			}
 
 			MaxsuPoise::SettingsHandler::Register();
+
+			SKSE::AllocTrampoline(56);
 			MaxsuPoise::HitEventHandler::InstallHooks();
 			MaxsuPoise::MagicStaggerHook::InstallHooks();
 			MaxsuPoise::PoiseRegenHandler::CharacterEx::InstallHook();

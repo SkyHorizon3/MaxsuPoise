@@ -22,7 +22,8 @@ namespace MaxsuPoise
 
 			static void Install()
 			{
-				stl::write_thunk_call<ProcessHitEvent>(REL::RelocationID(37673, 38627).address() + REL::Relocate(0x3C0, 0x4A8, 0x3C0));  // 1.5.97 140628C20
+				REL::Relocation<std::uintptr_t> target1{ RELOCATION_ID(37673, 38627), REL::Relocate(0x3C0, 0x4A8, 0x3C0) };
+				stl::write_thunk_call<ProcessHitEvent>(target1.address());  // 1.5.97 140628C20
 			}
 		};
 
