@@ -1,0 +1,5 @@
+t_PoiseHealthSettings	韧性生命设置
+t_PoiseHealthSettings_desc	有关于韧性生命的设置
+t_BasePoiseHealth	基础韧性
+t_BaseArmorPoiseHealth	基础护甲韧性
+t_HeavyArmorPoiseBonus	重甲韧性加成

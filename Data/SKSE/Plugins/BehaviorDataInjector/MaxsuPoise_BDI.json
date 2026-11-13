@@ -10,5 +10,12 @@
         "type": "kFloat",
         "name": "MaxsuPoise_RegenDelayTimer",
         "value": 0.0
+    },
+    {
+        "projectPath": "Actors",
+        "type": "kFloat",
+        "name": "MaxsuPoise_StaggerProtectTimer",
+        "value": 0.0
     }
 ]
+

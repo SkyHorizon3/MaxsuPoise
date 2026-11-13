@@ -1,0 +1,102 @@
+硬直系统设计方案版本0.31
+
+一、TotalPoiseHealth的计算:
+变量
+1. BasePoiseHealth: MaxsuPoise.ini上设置的全局统一数值，表示受击者最基础的韧性生命值
+2. BaseMass: Race form里的数值,在不同种族actor中独立，表示受击者的基础质量
+3. Scale: 受击者的scale系数数值,在不同actor中独立，表示受击者个体的大小
+4. BaseArmorPoiseHealth: MaxsuPoise.ini上设置的全局统一数值，表示受击者身上所装备的一件护甲所带来的额外韧性生命值
+5. HeavyArmorPoiseBonus: MaxsuPoise.ini上设置的全局统一数值，表示当护甲为重甲时的额外韧性生命增益系数。
+
+计算公式
+单件护甲的韧性生命值 = BaseArmorPoiseHealth * (1 + HeavyArmorPoiseBonus * 是否重甲)
+TotalPoiseHealth = (BasePoiseHealth * BaseMass * Scale) + 护甲数量 * 单件护甲的韧性生命值
+
+
+二、PoiseDamage的计算:
+变量
+1. BaseWeaponPoiseDamage: MaxsuPoise.ini上设置的全局统一数值, 表示攻击者身上武器对攻击目标造成的基础韧性伤害
+2. WeaponDamageMult: 若weapon form里存在名字为 MaxsuPoise_UniqueWeapStagger 的keyword，则直接读取weapon form自身的stagger数值。若不存在，则读取Json文件上自定义的武器韧性伤害系数
+3. AnimationDamageMult: 攻击者动画注解上自定义的武器韧性伤害系数，根据不同动画而有所不同
+4. AttackDataStagger: 攻击者当前所执行的attackData中的数值，根据不同攻击方式而不同
+5. BaseMagicPoiseDamage: MaxsuPoise.ini上设置的全局统一数值, 表示攻击者对攻击目标释放stagger类型法术造成的基础韧性伤害
+6. MagicMagnitude: stagger类型法术form里的Magnitude系数，根据不同法术而不同。
+7. ModTargetStagger: 攻击者身上所带perk中的ModTargetStagger系数。
+8. ModIncomingStagger: 受击者身上所带perk中的ModIncomingStagger系数。
+9. BlockingMult: 根据MaxsuPoise.ini上的BlockedMode分为两种情况：若BlockedMode为PercentBlocked，则值等于(1 - 原版格挡减伤比例)；若BlockedMode为FullyBlocked,则值等于0
+10. StrengthMult: (攻击者BaseMass * 攻击者Scale) / (受击者BaseMass * 受击者Scale) 
+
+计算公式
+物理伤害：PoiseDamage = BaseWeaponPoiseDamage * (WeaponDamageMult + StrengthMult + AttackDataStagger) * (AnimationDamageMult + 1) * ModTargetStagger * ModIncomingStagger
+	若攻击被格挡，则 PoiseDamage *= BlockingMult
+Stagger法术伤害: PoiseDamage = BaseMagicPoiseDamage * MagicMagnitude
+
+
+三、 TotalImmuneLevel的计算：
+变量
+1. KeywordImmuneLevel：受击者对于不同等级硬直的免疫能力，通过专门的keyword来设置:
+MaxsuPoise_ImmuneSmall
+MaxsuPoise_ImmuneMedium
+MaxsuPoise_ImmuneLarge
+MaxsuPoise_ImmuneLargest 
+分别代表受击者具有对四个等级的硬直免疫能力。免疫keyword可以直接添加到actor身上或通过将具有对应keyword的magic effect释放在actor身上来实现。
+若同时存在多个keyword时，则以等级最高的keyword为最终值。
+
+2. AnimationImmuneLevel: 受击者动画注解上自定义的硬直免疫等级，根据播放的不同动画而有所不同。
+
+计算公式
+取KeywordImmuneLevel和AnimationImmuneLevel中的最大值:
+TotalImmuneLevel = MAX(KeywordImmuneLevel,AnimationImmuneLevel) 
+
+
+四、硬直触发:
+变量
+1. TotalPoiseHealth：受击者的总韧性生命值,具体计算方式看上文
+2. CurrentPoiseHealth: 通过BDI注入的graphVairbaleFloat值，表示受击者当前剩余的韧性生命值
+3. PoiseDamage: 攻击者单次攻击造成的韧性伤害具体计算方式看上文
+4. SmallStaggerTHLD: MaxsuPoise.ini上设置的全局统一数值，表示受击者触发小硬直动画的阈值
+5. MediumStaggerTHLD: MaxsuPoise.ini上设置的全局统一数值，表示受击者触发中硬直动画的阈值
+6. LargeStaggerTHLD: MaxsuPoise.ini上设置的全局统一数值，表示受击者触发大硬直动画的阈值
+7. TotalImmuneLevel: 受击者所能免疫硬直动画的等级，具体计算方式看上文
+
+硬直触发结算过程
+1. 受击者初始状态下的 CurrentPoiseHealth 值等于 TotalPoiseHealth 
+2. 攻击者单次攻击击中受击者造成伤害后, 'CurrentPoiseHealth -= PoiseDamage'
+3. 若 'CurrentPoiseHealth <= 0', 触发最大硬直动画
+4. 若 'CurrentPoiseHealth > 0' 则计算 'PoiseDamage / TotalPoiseHealth' 的结果:
+	若 '结果 < SmallStaggerTHLD'，不触发硬直动画
+	若 'SmallStaggerTHLD <= 结果 < MediumStaggerTHLD' 且 'TotalImmuneLevel < 1', 触发小硬直动画
+	若 'MediumStaggerTHLD <= 结果 < LargeStaggerTHLD' 且 'TotalImmuneLevel < 2' ,触发中硬直动画
+	若 '结果 >= LargeStaggerTHLD'，且 'TotalImmuneLevel < 3' 触发大硬直动画
+
+
+五、韧性值恢复
+变量
+1. PoiseRegen: MaxsuPoise.ini上设置的全局统一数值，表示受击者韧性生命值的回复速度
+
+实现方式
+在受击者的ActorUpdate主循环函数里进行检测；
+	1.若 '0 < CurrentPoiseHealth < TotalPoiseHealth'，每秒钟 CurrentPoiseHealth +=  PoiseRegen
+	2.若 'CurrentPoiseHealth > TotalPoiseHealth' 则 'CurrentPoiseHealth = TotalPoiseHealth'
+	3.若 'CurrentPoiseHealth <= 0' 则
+	若受击者处于硬直状态，免疫所有PoiseDamage和硬直,
+	若受击者不处于硬直状态， currentPoiseHealth = TotalPoiseHealth·
+
+
+六、特殊硬直动画
+(待完成)
+
+
+七. 防止连续硬直机制
+变量
+1. StaggerProtectTime: MaxsuPoise.ini上设置的全局统一数值，表示角色从最大硬直动画恢复过来后，所获得的免疫硬直动画效果保护时间
+
+实现方式
+当 CurrentPoiseHealth <= 0 且触发了最大硬直动画后，角色进入免疫硬直和韧性伤害的状态
+当角色从最大硬直动画中恢复过来之后，会获得相当于TotalImmuneLevel = 3 的免疫大硬直动画的效果，效果持续时长等于StaggerProtectTime的时间
+
+八. 动画注解说明
+
+1. 添加霸体注解:
+0.100000 MaxsuPoise{"duration" : 1.1, "immuneLevel": 2}
+效果:当角色正在播放此动画时，当动画时长处于0.1秒 到 1.2 秒之间，角色会获得2级的 ImmuneLevel
